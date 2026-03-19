@@ -1,0 +1,26 @@
+import json
+import ast
+import streamlit as st
+import pandas as pd
+
+st.title("Injury Tracker GAA")
+st.subheader("Please select an injury type:")
+
+def PLEASEWORK(val):
+    if pd.isna(val):
+        return None
+    if isinstance(val, str):
+        try:
+            return ast.literal_eval(val) 
+        except (ValueError, SyntaxError):
+            return val 
+    return val
+
+df = pd.read_csv('Injuries.csv')
+
+df = df[df['Injury'] == 'Injury'].reset_index(drop=True)
+
+df['Injury'] = df['Injury'].apply(PLEASEWORK)
+
+injury = st.selectbox('Select an injury', df['Injury'].sort_values().unique(), index=None)
+
