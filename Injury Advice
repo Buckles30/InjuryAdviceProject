@@ -18,8 +18,6 @@ def PLEASEWORK(val):
 
 df = pd.read_csv('Injuries.csv')
 
-df = df[df['Injury'] == 'Injury'].reset_index(drop=True)
-
 df['Injury'] = df['Injury'].apply(PLEASEWORK)
 
 injury = st.selectbox('Select an injury', df['Injury'].sort_values().unique(), index=None)
