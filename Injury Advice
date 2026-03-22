@@ -11,14 +11,60 @@ def PLEASEWORK(val):
         return None
     if isinstance(val, str):
         try:
-            return ast.literal_eval(val) 
+            return ast.literal_eval(val)
         except (ValueError, SyntaxError):
-            return val 
+            return val
     return val
-
 df = pd.read_csv('Injuries.csv')
+df['Days'] = df['Days'].str.replace(' days', '').astype(float)
 
+def cleanatron(injury_text):
+    text = str(injury_text).lower()
+
+    if 'hamstring' in text:
+        return 'Hamstring'
+    elif 'ankle' in text:
+        return 'Ankle'
+    elif 'knee' in text or 'acl' in text or 'meniscus' in text:
+        return 'Knee'
+    elif 'shoulder' in text or 'collarbone' in text:
+        return 'Shoulder'
+    elif 'calf' in text:
+        return 'Calf'
+    elif 'groin' in text:
+        return 'Groin'
+    elif 'concussion' in text or 'head' in text:
+        return 'Head / Concussion'
+    elif 'quad' in text or 'thigh' in text:
+        return 'Quad'
+    else:
+        return 'Other'
+
+df['Clean_Injury'] = df['Injury'].apply(cleanatron)
 df['Injury'] = df['Injury'].apply(PLEASEWORK)
 
-injury = st.selectbox('Select an injury', df['Injury'].sort_values().unique(), index=None)
+injury = st.selectbox('Select an injury', df['Clean_Injury'].sort_values().unique(), index=None)
+user_injury = df[df['Clean_Injury'] == injury]
 
+if injury == 'Other':
+    search = st.text_input('Search injury type:')
+    other_df = df[df['Clean_Injury'] == 'Other']
+
+    if search:
+        mask = other_df['Injury'].astype(str).str.contains(search, case=False, na=False)
+        results = other_df[mask]
+    else:
+        results = other_df
+
+    if not results.empty:
+        selected_other = st.selectbox(
+            'Matching injuries:',
+            results['Injury'].unique(),
+            index=None
+        )
+    else:
+        st.write('No injuries match your search.')
+        
+average_time = df['Days'].mean()
+clean_days = round(average_time,2)
+st.metric(label="Estimated Return to Play", value=f"{clean_days} Days")
