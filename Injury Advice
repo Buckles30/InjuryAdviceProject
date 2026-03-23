@@ -65,6 +65,6 @@ if injury == 'Other':
     else:
         st.write('No injuries match your search.')
         
-average_time = df['Days'].mean()
-clean_days = round(average_time,2)
+average_time = user_injury['Days'].mean()
+clean_days = round(average_time)
 st.metric(label="Estimated Return to Play", value=f"{clean_days} Days")
