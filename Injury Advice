@@ -1,10 +1,9 @@
-import json
 import ast
 import streamlit as st
 import pandas as pd
 
 st.title("Injury Tracker GAA")
-st.subheader("Please select an injury type:")
+st.subheader("Predicting injury timeline based on a dataset.")
 
 def PLEASEWORK(val):
     if pd.isna(val):
@@ -15,12 +14,9 @@ def PLEASEWORK(val):
         except (ValueError, SyntaxError):
             return val
     return val
-df = pd.read_csv('Injuries.csv')
-df['Days'] = df['Days'].str.replace(' days', '').astype(float)
 
 def cleanatron(injury_text):
     text = str(injury_text).lower()
-
     if 'hamstring' in text:
         return 'Hamstring'
     elif 'ankle' in text:
@@ -40,21 +36,26 @@ def cleanatron(injury_text):
     else:
         return 'Other'
 
+df = pd.read_csv('Injuries.csv')
+
+df['Days'] = df['Days'].str.replace(' days', '').astype(float)
+
 df['Clean_Injury'] = df['Injury'].apply(cleanatron)
 df['Injury'] = df['Injury'].apply(PLEASEWORK)
 
-injury = st.selectbox('Select an injury', df['Clean_Injury'].sort_values().unique(), index=None)
-age = st.slider('Select your age', 16, 40, 22 )
+user_injury = pd.DataFrame() 
+selected_other = None        
+
+st.divider()
+
+injury = st.selectbox('Select an injury area:', df['Clean_Injury'].sort_values().unique(), index=None)
+
+age = st.slider('Select player age:', 16, 40, 22)
 min_age = age - 3
 max_age = age + 3
-user_injury = df[ 
-    (df['Clean_Injury'] == injury) & 
-    (df['player_age'] >= min_age) & 
-    (df['player_age'] <= max_age) 
-]
 
 if injury == 'Other':
-    search = st.text_input('Search injury type:')
+    search = st.text_input('Search specific injury (e.g., thumb, toe):')
     other_df = df[df['Clean_Injury'] == 'Other']
 
     if search:
@@ -65,13 +66,44 @@ if injury == 'Other':
 
     if not results.empty:
         selected_other = st.selectbox(
-            'Matching injuries:',
+            'Matching injuries found:',
             results['Injury'].unique(),
             index=None
         )
     else:
         st.write('No injuries match your search.')
-        
-average_time = user_injury['Days'].mean()
-clean_days = round(average_time)
-st.metric(label="Estimated Return to Play", value=f"{clean_days} Days")
+
+if injury == 'Other' and selected_other:
+    user_injury = df[ 
+        (df['Injury'] == selected_other) &
+        (df['player_age'] >= min_age) & 
+        (df['player_age'] <= max_age) 
+    ]
+
+elif injury != 'Other' and injury:
+    user_injury = df[ 
+        (df['Clean_Injury'] == injury) & 
+        (df['player_age'] >= min_age) & 
+        (df['player_age'] <= max_age) 
+    ]
+
+st.divider()
+st.subheader("Data Analysis")
+
+case_count = len(user_injury)
+
+col1, col2 = st.columns(2)
+
+with col1:
+    if case_count > 0:
+        average_time = user_injury['Days'].mean()
+        clean_days = round(average_time)
+        st.metric(label="Estimated Return to Play", value=f"{clean_days} Days")
+    else:
+        st.metric(label="Estimated Return to Play", value="N/A")
+
+with col2:
+    if case_count < 15:
+        st.metric(label="Cases Found (Low Confidence)", value=case_count, delta="Need more historical data", delta_color="inverse")
+    else:
+        st.metric(label="Cases Found (High Confidence)", value=case_count)
