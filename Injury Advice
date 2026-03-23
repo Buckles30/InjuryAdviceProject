@@ -44,7 +44,14 @@ df['Clean_Injury'] = df['Injury'].apply(cleanatron)
 df['Injury'] = df['Injury'].apply(PLEASEWORK)
 
 injury = st.selectbox('Select an injury', df['Clean_Injury'].sort_values().unique(), index=None)
-user_injury = df[df['Clean_Injury'] == injury]
+age = st.slider('Select your age', 16, 40, 22 )
+min_age = age - 3
+max_age = age + 3
+user_injury = df[ 
+    (df['Clean_Injury'] == injury) & 
+    (df['player_age'] >= min_age) & 
+    (df['player_age'] <= max_age) 
+]
 
 if injury == 'Other':
     search = st.text_input('Search injury type:')
