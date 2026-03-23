@@ -46,6 +46,31 @@ df['Injury'] = df['Injury'].apply(PLEASEWORK)
 user_injury = pd.DataFrame() 
 selected_other = None        
 
+with st.sidebar:
+    st.header("Log a New Injury")
+    st.write("Add a recent case to the database.")
+    
+    with st.form("add_injury_form"):
+        new_age = st.number_input("Player Age", min_value=16, max_value=50, value=22)
+        new_injury = st.text_input("Injury Name (e.g., Hamstring, Broken Toe)")
+        new_days = st.number_input("Days to Recover", min_value=1, max_value=365, value=14)
+        
+        submitted = st.form_submit_button("Save to Database")
+        
+        if submitted:
+            formatted_days = f"{new_days} days"
+            
+            new_row = pd.DataFrame({
+                'player_age': [new_age],
+                'Injury': [new_injury],
+                'Days': [formatted_days]
+            })
+            
+            new_row.to_csv('Injuries.csv', mode='a', header=False, index=False)
+            
+            st.success(f"Successfully logged: {new_injury} ({new_days} days)")
+            st.rerun()
+
 st.divider()
 
 injury = st.selectbox('Select an injury area:', df['Clean_Injury'].sort_values().unique(), index=None)
@@ -107,7 +132,10 @@ with col2:
         st.metric(label="Cases Found (Low Confidence)", value=case_count, delta="Need more historical data", delta_color="inverse")
     else:
         st.metric(label="Cases Found (High Confidence)", value=case_count)
+
 st.divider()
 st.subheader("Positional Breakdown")
-position_graph = user_injury['player_position'].value_counts()
-st.bar_chart(position_graph)
+
+if case_count > 0 and 'player_position' in user_injury.columns:
+    position_counts = user_injury['player_position'].value_counts()
+    st.bar_chart(position_counts)
