@@ -107,3 +107,7 @@ with col2:
         st.metric(label="Cases Found (Low Confidence)", value=case_count, delta="Need more historical data", delta_color="inverse")
     else:
         st.metric(label="Cases Found (High Confidence)", value=case_count)
+st.divider()
+st.subheader("Positional Breakdown")
+position_graph = user_injury['player_position'].value_counts()
+st.bar_chart(position_graph)
