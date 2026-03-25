@@ -15,6 +15,7 @@ def PLEASEWORK(val):
             return val
     return val
 
+# Categorises raw injury text into standardised groupings
 def cleanatron(injury_text):
     text = str(injury_text).lower()
     if 'hamstring' in text:
@@ -38,6 +39,7 @@ def cleanatron(injury_text):
 
 df = pd.read_csv('Injuries.csv')
 
+# Removes string characters to allow for maths operations
 df['Days'] = df['Days'].str.replace(' days', '').astype(float)
 
 df['Clean_Injury'] = df['Injury'].apply(cleanatron)
@@ -66,6 +68,7 @@ with st.sidebar:
                 'Days': [formatted_days]
             })
             
+            # Appends new entries to the existing CSV file
             new_row.to_csv('Injuries.csv', mode='a', header=False, index=False)
             
             st.success(f"Successfully logged: {new_injury} ({new_days} days)")
@@ -75,6 +78,7 @@ st.divider()
 
 injury = st.selectbox('Select an injury area:', df['Clean_Injury'].sort_values().unique(), index=None)
 
+# Establishes a 3-year margin for the selected age 
 age = st.slider('Select player age:', 16, 40, 22)
 min_age = age - 3
 max_age = age + 3
@@ -83,6 +87,7 @@ if injury == 'Other':
     search = st.text_input('Search specific injury (e.g., thumb, toe):')
     other_df = df[df['Clean_Injury'] == 'Other']
 
+    # Filters unclassified injuries using text search
     if search:
         mask = other_df['Injury'].astype(str).str.contains(search, case=False, na=False)
         results = other_df[mask]
@@ -98,6 +103,7 @@ if injury == 'Other':
     else:
         st.write('No injuries match your search.')
 
+# Filters the main dataset based on user criteria
 if injury == 'Other' and selected_other:
     user_injury = df[ 
         (df['Injury'] == selected_other) &
@@ -128,8 +134,9 @@ with col1:
         st.metric(label="Estimated Return to Play", value="N/A")
 
 with col2:
-    if case_count < 15:
-        st.metric(label="Cases Found (Low Confidence)", value=case_count, delta="Need more historical data", delta_color="inverse")
+    # Evaluates confidence using a 150 case threshold
+    if case_count < 150:
+        st.metric(label="Cases Found (Low Confidence)", value=case_count)
     else:
         st.metric(label="Cases Found (High Confidence)", value=case_count)
 
